@@ -1,5 +1,6 @@
 const path = require("path");
 const Database = require("better-sqlite3");
+const crypto = require("crypto");
 
 const dbPath = path.join(__dirname, "data", "app.db");
 const fs = require("fs");
@@ -9,10 +10,28 @@ const db = new Database(dbPath);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
+/* ── Password helpers ──────────────────────────────────── */
+function hashPassword(plain) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(plain, salt, 64).toString("hex");
+  return salt + ":" + hash;
+}
+
+function verifyPassword(plain, stored) {
+  const [salt, hash] = stored.split(":");
+  const check = crypto.scryptSync(plain, salt, 64).toString("hex");
+  return check === hash;
+}
+
+db.hashPassword = hashPassword;
+db.verifyPassword = verifyPassword;
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS employees (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    username TEXT UNIQUE,
+    password_hash TEXT,
     contact TEXT,
     role TEXT DEFAULT 'tailor',
     hire_date TEXT,
@@ -60,12 +79,16 @@ db.exec(`
   );
 `);
 
-// Seed a default admin if the employees table is empty
+// Seed default accounts if the employees table is empty
 const count = db.prepare("SELECT COUNT(*) AS c FROM employees").get();
 if (count.c === 0) {
-  db.prepare("INSERT INTO employees (name, contact, role, hire_date) VALUES (?, ?, ?, ?)").run(
-    "Admin", "", "admin", new Date().toISOString().slice(0, 10)
+  const seed = db.prepare(
+    "INSERT INTO employees (name, username, password_hash, contact, role, hire_date) VALUES (?, ?, ?, ?, ?, ?)"
   );
+  const today = new Date().toISOString().slice(0, 10);
+  seed.run("Administrator", "admin",   hashPassword("admin123"),   "", "admin",   today);
+  seed.run("Manager User",  "manager", hashPassword("manager123"), "", "manager", today);
+  seed.run("Tailor User",   "tailor",  hashPassword("tailor123"),  "", "tailor",  today);
 }
 
 module.exports = db;

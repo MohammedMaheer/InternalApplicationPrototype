@@ -424,14 +424,16 @@
       </button></li>
     </ul>
     <div class="nav-footer">
-      <div class="role-switch">
-        <label for="roleSel" style="display:block;margin-bottom:4px;font-size:10px;color:#8a7f74;text-transform:uppercase;letter-spacing:.5px;">Simulate role</label>
-        <select id="roleSel" style="width:100%;padding:4px 6px;font-size:11px;border-radius:4px;border:1px solid #4a4540;background:#3a3632;color:#d4cdc4;font-family:inherit;cursor:pointer;">
-          <option value="admin">Admin</option>
-          <option value="manager">Manager</option>
-          <option value="tailor">Tailor</option>
-        </select>
+      <div id="userInfo" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="width:28px;height:28px;border-radius:6px;background:#4a4540;display:flex;align-items:center;justify-content:center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4cdc4" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div id="userName" style="font-size:12px;color:#d4cdc4;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          <div id="userRole" style="font-size:10px;color:#8a7f74;text-transform:capitalize;"></div>
+        </div>
       </div>
+      <button id="logoutBtn" onclick="logout()" style="width:100%;padding:5px 8px;font-size:11px;border-radius:4px;border:1px solid #4a4540;background:#3a3632;color:#d4cdc4;font-family:inherit;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#4a4540'" onmouseout="this.style.background='#3a3632'">Sign out</button>
       <div style="margin-top:8px;">v1.0 &middot; internal use</div>
     </div>
   </nav>
@@ -521,7 +523,7 @@
       <div class="panel">
         <div class="panel-body">
           <table>
-            <thead><tr><th>#</th><th>Name</th><th>Contact</th><th>Role</th><th>Since</th><th></th></tr></thead>
+            <thead><tr><th>#</th><th>Name</th><th>Contact</th><th>Role</th><th>Username</th><th>Since</th><th></th></tr></thead>
             <tbody id="empRows"></tbody>
           </table>
         </div>
@@ -651,6 +653,12 @@
             </select>
           </div>
           <div class="field"><label>Joined on</label><input type="date" id="empDate"></div>
+        </div>
+        <div style="border-top:1px solid var(--border-light);margin:14px 0 10px;"></div>
+        <p style="font-size:11px;color:var(--text-light);margin-bottom:8px;">Login credentials (optional — leave blank if no system access needed)</p>
+        <div class="fg">
+          <div class="field"><label>Username</label><input id="empUsername" autocomplete="off" placeholder="e.g. john"></div>
+          <div class="field"><label>Password</label><input type="password" id="empPassword" autocomplete="new-password" placeholder="Min 4 characters"></div>
         </div>
       </div>
       <div class="dialog-foot">

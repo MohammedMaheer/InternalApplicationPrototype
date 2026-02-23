@@ -1,22 +1,37 @@
-/* ── Role state ─────────────────────────────────────────── */
-let currentRole = "admin";
+/* ── Auth / session state ───────────────────────────────── */
+let currentRole = "tailor";   // updated from /api/auth/me on boot
+let currentUser = null;
 
-document.getElementById("roleSel").addEventListener("change", function () {
-  currentRole = this.value;
-  toast("Switched to role: " + currentRole);
-  // Refresh the active view to reflect permission changes
-  const activeBtn = document.querySelector(".nav-links button.active");
-  if (activeBtn) showView(activeBtn.dataset.view);
-});
+async function checkAuth() {
+  try {
+    const res = await fetch("/api/auth/me");
+    if (!res.ok) { window.location.href = "/login.html"; return false; }
+    const user = await res.json();
+    currentRole = user.role;
+    currentUser = user;
+    document.getElementById("userName").textContent = user.name;
+    document.getElementById("userRole").textContent = user.role;
+    return true;
+  } catch {
+    window.location.href = "/login.html";
+    return false;
+  }
+}
+
+async function logout() {
+  await fetch("/api/auth/logout", { method: "POST" });
+  window.location.href = "/login.html";
+}
 
 /* ── API helper ─────────────────────────────────────────── */
 async function api(path, method = "GET", body) {
-  const opts = { method, headers: { "x-role": currentRole } };
+  const opts = { method, headers: {} };
   if (body) {
     opts.headers["Content-Type"] = "application/json";
     opts.body = JSON.stringify(body);
   }
   const res = await fetch("/api" + path, opts);
+  if (res.status === 401) { window.location.href = "/login.html"; return; }
   const text = await res.text();
   let data;
   try { data = JSON.parse(text); } catch { data = text; }
@@ -438,13 +453,14 @@ async function loadEmployees() {
         <td>${e.name}</td>
         <td>${e.contact || "—"}</td>
         <td>${roleTag(e.role)}</td>
+        <td>${e.username || "—"}</td>
         <td>${e.hire_date || "—"}</td>
         <td class="actions">
           <button class="btn btn-ghost btn-sm" ${!canManageStaff() ? "disabled" : ""} onclick="editEmployee(${e.id})">Edit</button>
           <button class="btn btn-del btn-sm" ${!canDeleteStaff() ? "disabled" : ""} onclick="deleteEmployee(${e.id})">Del</button>
         </td>
       </tr>`).join("")
-    : `<tr><td colspan="6" class="empty-msg">No staff members</td></tr>`;
+    : `<tr><td colspan="7" class="empty-msg">No staff members</td></tr>`;
 }
 
 async function saveEmployee(e) {
@@ -454,8 +470,11 @@ async function saveEmployee(e) {
     name: document.getElementById("empName").value,
     contact: document.getElementById("empContact").value,
     role: document.getElementById("empRole").value,
-    hire_date: document.getElementById("empDate").value || null
+    hire_date: document.getElementById("empDate").value || null,
+    username: document.getElementById("empUsername").value.trim() || null
   };
+  const pw = document.getElementById("empPassword").value;
+  if (pw) body.password = pw;
   if (id) await api("/employees/" + id, "PUT", body);
   else await api("/employees", "POST", body);
   closeModal("empDlg");
@@ -471,6 +490,8 @@ async function editEmployee(id) {
   document.getElementById("empContact").value = e.contact || "";
   document.getElementById("empRole").value = e.role;
   document.getElementById("empDate").value = e.hire_date || "";
+  document.getElementById("empUsername").value = e.username || "";
+  document.getElementById("empPassword").value = "";  // always blank on edit
   document.getElementById("empDlgTitle").textContent = "Edit staff member";
   openModal("empDlg");
 }
@@ -513,4 +534,7 @@ openModal = function(id) {
 };
 
 /* ── Boot ──────────────────────────────────────────────── */
-loadDashboard();
+(async () => {
+  const ok = await checkAuth();
+  if (ok) loadDashboard();
+})();
