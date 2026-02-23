@@ -15,8 +15,9 @@ router.get("/:id", (req, res) => {
   res.json(row);
 });
 
-// POST create employee
+// POST create employee (admin/manager only)
 router.post("/", (req, res) => {
+  if (!req.requireRole("admin", "manager")) return;
   const { name, contact, role, hire_date } = req.body;
   if (!name) return res.status(400).json({ error: "Name is required" });
   const info = db.prepare(
@@ -25,8 +26,9 @@ router.post("/", (req, res) => {
   res.status(201).json({ id: info.lastInsertRowid });
 });
 
-// PUT update employee
+// PUT update employee (admin/manager only)
 router.put("/:id", (req, res) => {
+  if (!req.requireRole("admin", "manager")) return;
   const { name, contact, role, hire_date } = req.body;
   const info = db.prepare(
     "UPDATE employees SET name = ?, contact = ?, role = ?, hire_date = ? WHERE id = ?"
@@ -35,8 +37,9 @@ router.put("/:id", (req, res) => {
   res.json({ updated: true });
 });
 
-// DELETE employee
+// DELETE employee (admin only)
 router.delete("/:id", (req, res) => {
+  if (!req.requireRole("admin")) return;
   try {
     const info = db.prepare("DELETE FROM employees WHERE id = ?").run(req.params.id);
     if (info.changes === 0) return res.status(404).json({ error: "Employee not found" });

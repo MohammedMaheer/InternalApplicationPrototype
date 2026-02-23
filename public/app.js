@@ -1,6 +1,17 @@
+/* ── Role state ─────────────────────────────────────────── */
+let currentRole = "admin";
+
+document.getElementById("roleSel").addEventListener("change", function () {
+  currentRole = this.value;
+  toast("Switched to role: " + currentRole);
+  // Refresh the active view to reflect permission changes
+  const activeBtn = document.querySelector(".nav-links button.active");
+  if (activeBtn) showView(activeBtn.dataset.view);
+});
+
 /* ── API helper ─────────────────────────────────────────── */
 async function api(path, method = "GET", body) {
-  const opts = { method, headers: {} };
+  const opts = { method, headers: { "x-role": currentRole } };
   if (body) {
     opts.headers["Content-Type"] = "application/json";
     opts.body = JSON.stringify(body);
@@ -54,6 +65,17 @@ function roleTag(r) {
 }
 
 /* ── Navigation ────────────────────────────────────────── */
+/* ── Permission helpers ────────────────────────────────── */
+function canDelete() {
+  return currentRole === "admin" || currentRole === "manager";
+}
+function canManageStaff() {
+  return currentRole === "admin" || currentRole === "manager";
+}
+function canDeleteStaff() {
+  return currentRole === "admin";
+}
+
 document.querySelectorAll(".nav-links button").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".nav-links button").forEach(b => b.classList.remove("active"));
@@ -88,6 +110,23 @@ async function loadDashboard() {
     <div class="kpi c4"><div class="num">${employees.length}</div><div class="lbl">Staff</div></div>
   `;
 
+  // Order status breakdown
+  const statusCounts = { "Pending": 0, "In Progress": 0, "Completed": 0, "Delivered": 0 };
+  orders.forEach(o => { if (statusCounts.hasOwnProperty(o.status)) statusCounts[o.status]++; });
+  const total = orders.length || 1;
+  const statusClasses = { "Pending": "pending", "In Progress": "inprogress", "Completed": "completed", "Delivered": "delivered" };
+
+  document.getElementById("statusBreakdown").innerHTML = Object.entries(statusCounts).map(([label, count]) => {
+    const pct = Math.round((count / total) * 100);
+    return `<div class="status-bar-row">
+      <div class="status-bar-label">${label}</div>
+      <div class="status-bar-track">
+        <div class="status-bar-fill ${statusClasses[label]}" style="width:${orders.length ? pct : 0}%">${pct > 8 ? pct + "%" : ""}</div>
+      </div>
+      <div class="status-bar-count">${count}</div>
+    </div>`;
+  }).join("");
+
   const recent = orders.slice(0, 8);
   document.getElementById("recentOrders").innerHTML = recent.length
     ? recent.map(o => `<tr>
@@ -110,12 +149,13 @@ async function loadCustomers() {
         <td>${c.contact || "—"}</td>
         <td>${c.email || "—"}</td>
         <td>${c.preferences || "—"}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="viewMeasurementHistory(${c.id})">View history</button></td>
         <td class="actions">
           <button class="btn btn-ghost btn-sm" onclick="editCustomer(${c.id})">Edit</button>
-          <button class="btn btn-del btn-sm" onclick="deleteCustomer(${c.id})">Del</button>
+          <button class="btn btn-del btn-sm" ${!canDelete() ? "disabled" : ""} onclick="deleteCustomer(${c.id})">Del</button>
         </td>
       </tr>`).join("")
-    : `<tr><td colspan="6" class="empty-msg">No customers added</td></tr>`;
+    : `<tr><td colspan="7" class="empty-msg">No customers added</td></tr>`;
 }
 
 async function saveCustomer(e) {
@@ -146,15 +186,59 @@ async function editCustomer(id) {
 }
 
 async function deleteCustomer(id) {
-  if (!confirm("Delete this customer? Their orders will also be removed.")) return;
+  if (!canDelete()) { toast("Access denied — requires Admin or Manager role"); return; }
+  if (!confirm("Delete this customer? Their orders and measurements will also be removed.")) return;
   try {
-    const res = await api("/customers/" + id, "DELETE");
-    if (res.error) { toast(res.error); return; }
+    await api("/customers/" + id, "DELETE");
     toast("Customer deleted");
     loadCustomers();
   } catch (err) {
     toast(err.message || "Delete failed");
   }
+}
+
+/* ── Customer Measurement History ──────────────────────── */
+let historyCustomerId = null;
+
+async function viewMeasurementHistory(customerId) {
+  historyCustomerId = customerId;
+  const customer = await api("/customers/" + customerId);
+  document.getElementById("custHistTitle").textContent = "Measurement History — " + customer.name;
+  document.getElementById("custHistInfo").innerHTML =
+    "<strong>" + customer.name + "</strong>" +
+    (customer.contact ? " &middot; " + customer.contact : "") +
+    (customer.email ? " &middot; " + customer.email : "") +
+    (customer.preferences ? "<br>Preferences: " + customer.preferences : "");
+
+  const measurements = customer.measurements || [];
+  document.getElementById("custHistRows").innerHTML = measurements.length
+    ? measurements.map(m => `<tr>
+        <td>${m.id}</td>
+        <td>${m.type}</td>
+        <td>${m.chest || "—"}</td>
+        <td>${m.waist || "—"}</td>
+        <td>${m.hips || "—"}</td>
+        <td>${m.shoulder_width || "—"}</td>
+        <td>${m.sleeve_length || "—"}</td>
+        <td>${m.inseam || "—"}</td>
+        <td>${m.length || "—"}</td>
+        <td>${m.neck || "—"}</td>
+        <td>${m.notes || "—"}</td>
+        <td>${m.created_at ? m.created_at.slice(0, 10) : "—"}</td>
+      </tr>`).join("")
+    : '<tr><td colspan="12" class="empty-msg">No measurements recorded for this customer</td></tr>';
+
+  openModal("custHistDlg");
+}
+
+function addMeasForCustomerFromHistory() {
+  closeModal("custHistDlg");
+  populateMeasCustomers().then(() => {
+    if (historyCustomerId) {
+      document.getElementById("measCustomer").value = historyCustomerId;
+    }
+    openModal("measDlg");
+  });
 }
 
 /* ── Measurements ──────────────────────────────────────── */
@@ -254,15 +338,33 @@ async function loadOrders() {
         <td>${o.id}</td>
         <td>${o.customer_name || "—"}</td>
         <td>${o.description || "—"}</td>
-        <td>${statusTag(o.status)}</td>
+        <td>
+          <select class="inline-status-sel" data-order-id="${o.id}" onchange="quickStatusChange(this)" style="padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;font-family:inherit;cursor:pointer;">
+            ${["Pending","In Progress","Completed","Delivered"].map(s =>
+              `<option ${o.status === s ? "selected" : ""}>${s}</option>`
+            ).join("")}
+          </select>
+        </td>
         <td>${o.assigned_to_name || "—"}</td>
         <td>${o.due_date || "—"}</td>
         <td class="actions">
           <button class="btn btn-ghost btn-sm" onclick="editOrder(${o.id})">Edit</button>
-          <button class="btn btn-del btn-sm" onclick="deleteOrder(${o.id})">Del</button>
+          <button class="btn btn-del btn-sm" ${!canDelete() ? "disabled" : ""} onclick="deleteOrder(${o.id})">Del</button>
         </td>
       </tr>`).join("")
     : `<tr><td colspan="7" class="empty-msg">No orders yet</td></tr>`;
+}
+
+async function quickStatusChange(sel) {
+  const orderId = sel.dataset.orderId;
+  const newStatus = sel.value;
+  try {
+    await api("/orders/" + orderId + "/status", "PATCH", { status: newStatus });
+    toast("Status → " + newStatus);
+  } catch (err) {
+    toast(err.message);
+    loadOrders();
+  }
 }
 
 async function populateOrderDropdowns() {
@@ -316,10 +418,10 @@ async function editOrder(id) {
 }
 
 async function deleteOrder(id) {
+  if (!canDelete()) { toast("Access denied — requires Admin or Manager role"); return; }
   if (!confirm("Delete this order?")) return;
   try {
-    const res = await api("/orders/" + id, "DELETE");
-    if (res.error) { toast(res.error); return; }
+    await api("/orders/" + id, "DELETE");
     toast("Order deleted");
     loadOrders();
   } catch (err) {
@@ -338,8 +440,8 @@ async function loadEmployees() {
         <td>${roleTag(e.role)}</td>
         <td>${e.hire_date || "—"}</td>
         <td class="actions">
-          <button class="btn btn-ghost btn-sm" onclick="editEmployee(${e.id})">Edit</button>
-          <button class="btn btn-del btn-sm" onclick="deleteEmployee(${e.id})">Del</button>
+          <button class="btn btn-ghost btn-sm" ${!canManageStaff() ? "disabled" : ""} onclick="editEmployee(${e.id})">Edit</button>
+          <button class="btn btn-del btn-sm" ${!canDeleteStaff() ? "disabled" : ""} onclick="deleteEmployee(${e.id})">Del</button>
         </td>
       </tr>`).join("")
     : `<tr><td colspan="6" class="empty-msg">No staff members</td></tr>`;
@@ -362,6 +464,7 @@ async function saveEmployee(e) {
 }
 
 async function editEmployee(id) {
+  if (!canManageStaff()) { toast("Access denied — requires Admin or Manager role"); return; }
   const e = await api("/employees/" + id);
   document.getElementById("empId").value = e.id;
   document.getElementById("empName").value = e.name;
@@ -373,10 +476,10 @@ async function editEmployee(id) {
 }
 
 async function deleteEmployee(id) {
+  if (!canDeleteStaff()) { toast("Access denied — requires Admin role"); return; }
   if (!confirm("Remove this staff member?")) return;
   try {
-    const res = await api("/employees/" + id, "DELETE");
-    if (res.error) { toast(res.error); return; }
+    await api("/employees/" + id, "DELETE");
     toast("Staff member removed");
     loadEmployees();
   } catch (err) {
@@ -396,6 +499,9 @@ document.getElementById("orderDlg").addEventListener("click", function(e) {
 });
 document.getElementById("empDlg").addEventListener("click", function(e) {
   if (e.target === this) closeModal("empDlg");
+});
+document.getElementById("custHistDlg").addEventListener("click", function(e) {
+  if (e.target === this) closeModal("custHistDlg");
 });
 
 // Populate selects when opening measurement & order modals

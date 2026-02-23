@@ -22,6 +22,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Role-based access control helper – attached to req for routes
+app.use((req, res, next) => {
+  req.requireRole = (...roles) => {
+    if (!roles.includes(req.role)) {
+      res.status(403).json({ error: `Access denied. Requires role: ${roles.join(" or ")}` });
+      return false;
+    }
+    return true;
+  };
+  next();
+});
+
 // API routes
 app.use("/api/employees", require("./routes/employees"));
 app.use("/api/customers", require("./routes/customers"));

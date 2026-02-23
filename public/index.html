@@ -368,6 +368,21 @@
       font-size: 13px;
     }
 
+    /* Status bar chart on dashboard */
+    .status-bars { display: flex; flex-direction: column; gap: 10px; }
+    .status-bar-row { display: flex; align-items: center; gap: 10px; }
+    .status-bar-label { width: 90px; font-size: 12px; font-weight: 500; color: var(--text-mid); text-align: right; }
+    .status-bar-track { flex: 1; height: 22px; background: var(--surface-alt); border-radius: 4px; overflow: hidden; position: relative; }
+    .status-bar-fill { height: 100%; border-radius: 4px; transition: width .4s ease; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 600; color: #fff; min-width: fit-content; }
+    .status-bar-fill.pending    { background: #f59e0b; }
+    .status-bar-fill.inprogress { background: #3b82f6; }
+    .status-bar-fill.completed  { background: #22c55e; }
+    .status-bar-fill.delivered  { background: #8b5cf6; }
+    .status-bar-count { width: 30px; font-size: 12px; font-weight: 600; color: var(--text); }
+
+    /* Role permission visual hint */
+    .btn[disabled] { opacity: .45; cursor: not-allowed; pointer-events: none; }
+
     /* Responsive */
     @media (max-width: 768px) {
       .nav-rail { width: 54px; }
@@ -408,7 +423,17 @@
         <span>Staff</span>
       </button></li>
     </ul>
-    <div class="nav-footer">v1.0 &middot; internal use</div>
+    <div class="nav-footer">
+      <div class="role-switch">
+        <label for="roleSel" style="display:block;margin-bottom:4px;font-size:10px;color:#8a7f74;text-transform:uppercase;letter-spacing:.5px;">Simulate role</label>
+        <select id="roleSel" style="width:100%;padding:4px 6px;font-size:11px;border-radius:4px;border:1px solid #4a4540;background:#3a3632;color:#d4cdc4;font-family:inherit;cursor:pointer;">
+          <option value="admin">Admin</option>
+          <option value="manager">Manager</option>
+          <option value="tailor">Tailor</option>
+        </select>
+      </div>
+      <div style="margin-top:8px;">v1.0 &middot; internal use</div>
+    </div>
   </nav>
 
   <main class="content">
@@ -419,6 +444,15 @@
         <h2>Overview</h2>
       </div>
       <div class="kpi-row" id="kpiRow"></div>
+
+      <!-- Order status breakdown -->
+      <div class="panel" style="margin-bottom:22px;">
+        <div class="panel-head"><h3>Order status breakdown</h3></div>
+        <div class="panel-body" style="padding:18px;">
+          <div id="statusBreakdown" class="status-bars"></div>
+        </div>
+      </div>
+
       <div class="panel">
         <div class="panel-head"><h3>Recent orders</h3></div>
         <div class="panel-body">
@@ -439,7 +473,7 @@
       <div class="panel">
         <div class="panel-body">
           <table>
-            <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Notes</th><th></th></tr></thead>
+            <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Notes</th><th>Measurements</th><th></th></tr></thead>
             <tbody id="custRows"></tbody>
           </table>
         </div>
@@ -628,6 +662,31 @@
 </div>
 
 <div class="snack" id="snack"></div>
+
+<!-- ── Customer Measurement History Dialog ─────────────── -->
+<div class="overlay" id="custHistDlg">
+  <div class="dialog" style="width:680px;max-width:95vw;">
+    <div class="dialog-head">
+      <h3 id="custHistTitle">Measurement History</h3>
+      <button class="x" onclick="closeModal('custHistDlg')">&times;</button>
+    </div>
+    <div class="dialog-body" style="padding:0;">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border-light);background:var(--surface-alt);">
+        <div id="custHistInfo" style="font-size:13px;color:var(--text-mid);"></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>#</th><th>Type</th><th>Chest</th><th>Waist</th><th>Hips</th><th>Shoulder</th><th>Sleeve</th><th>Inseam</th><th>Length</th><th>Neck</th><th>Notes</th><th>Date</th></tr></thead>
+          <tbody id="custHistRows"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="dialog-foot">
+      <button type="button" class="btn btn-ghost" onclick="closeModal('custHistDlg')">Close</button>
+      <button type="button" class="btn btn-primary" onclick="addMeasForCustomerFromHistory()">+ Add measurement</button>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>

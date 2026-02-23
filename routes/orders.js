@@ -53,8 +53,18 @@ router.put("/:id", (req, res) => {
   res.json({ updated: true });
 });
 
-// DELETE order
+// PATCH update order status only
+router.patch("/:id/status", (req, res) => {
+  const { status } = req.body;
+  if (!status || !VALID_STATUSES.includes(status)) return res.status(400).json({ error: "Invalid status" });
+  const info = db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(status, req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: "Order not found" });
+  res.json({ updated: true });
+});
+
+// DELETE order (admin/manager only)
 router.delete("/:id", (req, res) => {
+  if (!req.requireRole("admin", "manager")) return;
   try {
     const info = db.prepare("DELETE FROM orders WHERE id = ?").run(req.params.id);
     if (info.changes === 0) return res.status(404).json({ error: "Order not found" });

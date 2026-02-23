@@ -13,7 +13,7 @@ router.get("/:id", (req, res) => {
   const row = db.prepare("SELECT * FROM customers WHERE id = ?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "Customer not found" });
   row.measurements = db.prepare(
-    "SELECT * FROM measurements WHERE customer_id = ? ORDER BY created_at DESC"
+    "SELECT * FROM measurements WHERE customer_id = ? ORDER BY created_at DESC, id DESC"
   ).all(req.params.id);
   res.json(row);
 });
@@ -38,8 +38,9 @@ router.put("/:id", (req, res) => {
   res.json({ updated: true });
 });
 
-// DELETE customer
+// DELETE customer (admin/manager only)
 router.delete("/:id", (req, res) => {
+  if (!req.requireRole("admin", "manager")) return;
   try {
     const info = db.prepare("DELETE FROM customers WHERE id = ?").run(req.params.id);
     if (info.changes === 0) return res.status(404).json({ error: "Customer not found" });
