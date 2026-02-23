@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StitchFlow – Internal Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f3ef;
+      --surface: #ffffff;
+      --surface-alt: #faf9f7;
+      --border: #e2ddd5;
+      --border-light: #ece8e1;
+      --text: #2c2825;
+      --text-mid: #6b6560;
+      --text-light: #9a938c;
+      --accent: #b45309;
+      --accent-hover: #92400e;
+      --accent-bg: #fef3c7;
+      --teal: #0d7377;
+      --teal-bg: #e0f5f5;
+      --rose: #b91c48;
+      --rose-bg: #fce4ec;
+      --slate: #475569;
+      --slate-bg: #e9ecef;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sidebar */
+    .shell { display: flex; min-height: 100vh; }
+
+    .nav-rail {
+      width: 220px;
+      background: #2c2825;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 40;
+    }
+
+    .nav-brand {
+      padding: 22px 18px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .nav-brand h1 {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: #e8dfd4;
+      letter-spacing: -0.3px;
+    }
+    .nav-brand small {
+      display: block;
+      font-size: 10.5px;
+      color: #8a7f74;
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      padding: 14px 10px;
+      flex: 1;
+      list-style: none;
+    }
+    .nav-links li { margin-bottom: 1px; }
+    .nav-links button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      border: none;
+      background: transparent;
+      color: #a09689;
+      font-size: 13px;
+      font-family: inherit;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      transition: background .12s, color .12s;
+    }
+    .nav-links button:hover { background: rgba(255,255,255,.06); color: #d4cdc4; }
+    .nav-links button.active { background: rgba(255,255,255,.1); color: #f0ebe4; }
+
+    .nav-links button svg {
+      width: 16px; height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .nav-footer {
+      padding: 14px 18px;
+      border-top: 1px solid rgba(255,255,255,.06);
+      font-size: 10px;
+      color: #6b6158;
+    }
+
+    /* Main */
+    .content { margin-left: 220px; flex: 1; padding: 30px 34px 50px; max-width: 1200px; }
+
+    .page-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 22px;
+    }
+    .page-title h2 {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .page-title .sub {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-left: 10px;
+      font-weight: 400;
+    }
+
+    /* Stat row */
+    .kpi-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 26px;
+      flex-wrap: wrap;
+    }
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 16px 20px;
+      min-width: 155px;
+      flex: 1;
+    }
+    .kpi .num {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .kpi .lbl {
+      font-size: 11px;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-top: 4px;
+    }
+    .kpi.c1 .num { color: var(--teal); }
+    .kpi.c2 .num { color: var(--accent); }
+    .kpi.c3 .num { color: var(--rose); }
+    .kpi.c4 .num { color: var(--slate); }
+
+    /* Table containers */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      margin-bottom: 22px;
+      overflow: hidden;
+    }
+    .panel-head {
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-head h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .panel-body { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--surface-alt); }
+    th {
+      text-align: left;
+      padding: 9px 16px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+    td {
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text);
+      border-top: 1px solid var(--border-light);
+      white-space: nowrap;
+    }
+    tbody tr:hover { background: #fdfcfa; }
+
+    /* Badges */
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+    .tag-pending    { background: #fef3c7; color: #92400e; }
+    .tag-inprogress { background: #dbeafe; color: #1e40af; }
+    .tag-completed  { background: #d5f5e3; color: #14532d; }
+    .tag-delivered  { background: #ede9fe; color: #5b21b6; }
+
+    .tag-admin   { background: var(--rose-bg); color: var(--rose); }
+    .tag-manager { background: var(--teal-bg); color: var(--teal); }
+    .tag-tailor  { background: var(--accent-bg); color: var(--accent); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 14px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .12s;
+      line-height: 1.3;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-mid);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface-alt); color: var(--text); }
+
+    .btn-del {
+      background: transparent;
+      color: #c0392b;
+      border-color: #e8c4bf;
+    }
+    .btn-del:hover { background: #fdf0ee; }
+
+    .btn-sm { padding: 4px 9px; font-size: 11.5px; }
+
+    .actions { display: flex; gap: 5px; }
+
+    /* Modals */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(44,40,37,.55);
+      z-index: 100;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 70px;
+    }
+    .overlay.open { display: flex; }
+
+    .dialog {
+      background: var(--surface);
+      border-radius: 10px;
+      width: 500px;
+      max-height: 78vh;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+    .dialog-head {
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dialog-head h3 { font-size: 14px; font-weight: 600; }
+    .dialog-head .x {
+      background: none; border: none;
+      font-size: 18px; cursor: pointer;
+      color: var(--text-light);
+      padding: 0 2px;
+    }
+    .dialog-head .x:hover { color: var(--text); }
+
+    .dialog-body { padding: 18px 20px; }
+    .dialog-foot {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Forms */
+    .fg { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field.wide { grid-column: 1 / -1; }
+    .field label {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-mid);
+    }
+    .field input, .field select, .field textarea {
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+      background: var(--surface);
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(180,83,9,.12);
+    }
+    .field textarea { resize: vertical; min-height: 52px; }
+    .field select { cursor: pointer; }
+
+    /* Sections */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Toast */
+    .snack {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: #2c2825;
+      color: #e8dfd4;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity .25s;
+      pointer-events: none;
+    }
+    .snack.show { opacity: 1; }
+
+    /* Empty state */
+    .empty-msg {
+      padding: 30px 20px;
+      text-align: center;
+      color: var(--text-light);
+      font-size: 13px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-rail { width: 54px; }
+      .nav-brand h1, .nav-brand small, .nav-links button span, .nav-footer { display: none; }
+      .content { margin-left: 54px; padding: 18px; }
+      .fg { grid-template-columns: 1fr; }
+      .kpi-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <nav class="nav-rail">
+    <div class="nav-brand">
+      <h1>StitchFlow</h1>
+      <small>Internal Tools</small>
+    </div>
+    <ul class="nav-links">
+      <li><button class="active" data-view="dashboard">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="11" width="7" height="10" rx="1"/></svg>
+        <span>Overview</span>
+      </button></li>
+      <li><button data-view="customers">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Customers</span>
+      </button></li>
+      <li><button data-view="measurements">
+        <svg viewBox="0 0 24 24"><path d="M2 12h5"/><path d="M17 12h5"/><path d="M7 4v16"/><path d="M17 4v16"/><path d="M7 8h3"/><path d="M7 12h3"/><path d="M7 16h3"/><path d="M14 8h3"/><path d="M14 12h3"/><path d="M14 16h3"/></svg>
+        <span>Measurements</span>
+      </button></li>
+      <li><button data-view="orders">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Orders</span>
+      </button></li>
+      <li><button data-view="employees">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Staff</span>
+      </button></li>
+    </ul>
+    <div class="nav-footer">v1.0 &middot; internal use</div>
+  </nav>
+
+  <main class="content">
+
+    <!-- Overview -->
+    <div id="dashboard" class="view active">
+      <div class="page-title">
+        <h2>Overview</h2>
+      </div>
+      <div class="kpi-row" id="kpiRow"></div>
+      <div class="panel">
+        <div class="panel-head"><h3>Recent orders</h3></div>
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>#</th><th>Customer</th><th>Work</th><th>Status</th><th>Due</th></tr></thead>
+            <tbody id="recentOrders"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customers -->
+    <div id="customers" class="view">
+      <div class="page-title">
+        <h2>Customers</h2>
+        <button class="btn btn-primary" onclick="openModal('custDlg')">+ New customer</button>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Notes</th><th></th></tr></thead>
+            <tbody id="custRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Measurements -->
+    <div id="measurements" class="view">
+      <div class="page-title">
+        <h2>Measurements</h2>
+        <button class="btn btn-primary" onclick="openModal('measDlg')">+ Record</button>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>#</th><th>Customer</th><th>Type</th><th>Chest</th><th>Waist</th><th>Hips</th><th>Shoulder</th><th>Sleeve</th><th>Length</th><th>Date</th><th></th></tr></thead>
+            <tbody id="measRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div id="orders" class="view">
+      <div class="page-title">
+        <h2>Orders</h2>
+        <button class="btn btn-primary" onclick="openModal('orderDlg')">+ New order</button>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>#</th><th>Customer</th><th>Work</th><th>Status</th><th>Assigned</th><th>Due</th><th></th></tr></thead>
+            <tbody id="orderRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff -->
+    <div id="employees" class="view">
+      <div class="page-title">
+        <h2>Staff</h2>
+        <button class="btn btn-primary" onclick="openModal('empDlg')">+ Add member</button>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>#</th><th>Name</th><th>Contact</th><th>Role</th><th>Since</th><th></th></tr></thead>
+            <tbody id="empRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Customer Dialog ─────────────────────────────────── -->
+<div class="overlay" id="custDlg">
+  <div class="dialog">
+    <div class="dialog-head">
+      <h3 id="custDlgTitle">New customer</h3>
+      <button class="x" onclick="closeModal('custDlg')">&times;</button>
+    </div>
+    <form id="custForm" onsubmit="saveCustomer(event)">
+      <div class="dialog-body">
+        <input type="hidden" id="custId">
+        <div class="fg">
+          <div class="field"><label>Full name *</label><input id="custName" required></div>
+          <div class="field"><label>Phone</label><input id="custContact"></div>
+          <div class="field"><label>Email</label><input type="email" id="custEmail"></div>
+          <div class="field"><label>Preferences / notes</label><input id="custPrefs"></div>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('custDlg')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Measurement Dialog ──────────────────────────────── -->
+<div class="overlay" id="measDlg">
+  <div class="dialog">
+    <div class="dialog-head">
+      <h3 id="measDlgTitle">Record measurement</h3>
+      <button class="x" onclick="closeModal('measDlg')">&times;</button>
+    </div>
+    <form id="measForm" onsubmit="saveMeasurement(event)">
+      <div class="dialog-body">
+        <input type="hidden" id="measId">
+        <div class="fg">
+          <div class="field"><label>Customer *</label><select id="measCustomer" required></select></div>
+          <div class="field"><label>Garment type *</label>
+            <select id="measType" required>
+              <option value="shirt">Shirt</option>
+              <option value="pant">Pant</option>
+              <option value="dress">Dress</option>
+              <option value="suit">Suit</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Chest (in)</label><input type="number" step="0.1" id="measChest"></div>
+          <div class="field"><label>Waist (in)</label><input type="number" step="0.1" id="measWaist"></div>
+          <div class="field"><label>Hips (in)</label><input type="number" step="0.1" id="measHips"></div>
+          <div class="field"><label>Shoulder (in)</label><input type="number" step="0.1" id="measShoulder"></div>
+          <div class="field"><label>Sleeve (in)</label><input type="number" step="0.1" id="measSleeve"></div>
+          <div class="field"><label>Inseam (in)</label><input type="number" step="0.1" id="measInseam"></div>
+          <div class="field"><label>Length (in)</label><input type="number" step="0.1" id="measLength"></div>
+          <div class="field"><label>Neck (in)</label><input type="number" step="0.1" id="measNeck"></div>
+          <div class="field wide"><label>Notes</label><textarea id="measNotes"></textarea></div>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('measDlg')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Order Dialog ────────────────────────────────────── -->
+<div class="overlay" id="orderDlg">
+  <div class="dialog">
+    <div class="dialog-head">
+      <h3 id="orderDlgTitle">New order</h3>
+      <button class="x" onclick="closeModal('orderDlg')">&times;</button>
+    </div>
+    <form id="orderForm" onsubmit="saveOrder(event)">
+      <div class="dialog-body">
+        <input type="hidden" id="orderId">
+        <div class="fg">
+          <div class="field"><label>Customer *</label><select id="orderCustomer" required></select></div>
+          <div class="field"><label>Measurement</label><select id="orderMeasurement"><option value="">— pick —</option></select></div>
+          <div class="field wide"><label>Description</label><textarea id="orderDesc"></textarea></div>
+          <div class="field"><label>Status</label>
+            <select id="orderStatus">
+              <option>Pending</option>
+              <option>In Progress</option>
+              <option>Completed</option>
+              <option>Delivered</option>
+            </select>
+          </div>
+          <div class="field"><label>Assign to</label><select id="orderAssigned"><option value="">— unassigned —</option></select></div>
+          <div class="field"><label>Due date</label><input type="date" id="orderDue"></div>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('orderDlg')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Employee Dialog ─────────────────────────────────── -->
+<div class="overlay" id="empDlg">
+  <div class="dialog">
+    <div class="dialog-head">
+      <h3 id="empDlgTitle">Add staff member</h3>
+      <button class="x" onclick="closeModal('empDlg')">&times;</button>
+    </div>
+    <form id="empForm" onsubmit="saveEmployee(event)">
+      <div class="dialog-body">
+        <input type="hidden" id="empId">
+        <div class="fg">
+          <div class="field"><label>Full name *</label><input id="empName" required></div>
+          <div class="field"><label>Contact</label><input id="empContact"></div>
+          <div class="field"><label>Role</label>
+            <select id="empRole">
+              <option value="tailor">Tailor</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="field"><label>Joined on</label><input type="date" id="empDate"></div>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('empDlg')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="snack" id="snack"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
