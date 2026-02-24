@@ -92,9 +92,9 @@ function canDeleteStaff() {
   return currentRole === "admin";
 }
 
-document.querySelectorAll(".nav-links button").forEach(btn => {
+document.querySelectorAll(".sidebar-nav button").forEach(btn => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".nav-links button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".sidebar-nav button").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     showView(btn.dataset.view);
   });
@@ -120,22 +120,10 @@ async function loadDashboard() {
   ]);
 
   document.getElementById("kpiRow").innerHTML = `
-    <div class="kpi c1">
-      <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-      <div class="num">${customers.length}</div><div class="lbl">Customers</div>
-    </div>
-    <div class="kpi c2">
-      <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M2 12h5"/><path d="M17 12h5"/><path d="M7 4v16"/><path d="M17 4v16"/></svg></div>
-      <div class="num">${measurements.length}</div><div class="lbl">Measurements</div>
-    </div>
-    <div class="kpi c3">
-      <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-      <div class="num">${orders.length}</div><div class="lbl">Orders</div>
-    </div>
-    <div class="kpi c4">
-      <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
-      <div class="num">${employees.length}</div><div class="lbl">Staff</div>
-    </div>
+    <div class="kpi"><div class="label">Customers</div><div class="value">${customers.length}</div></div>
+    <div class="kpi"><div class="label">Measurements</div><div class="value">${measurements.length}</div></div>
+    <div class="kpi"><div class="label">Orders</div><div class="value">${orders.length}</div></div>
+    <div class="kpi"><div class="label">Staff</div><div class="value">${employees.length}</div></div>
   `;
 
   // Order status breakdown

@@ -3,239 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StitchFlow – Sign In</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+  <title>StitchFlow — Sign in</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0f0f12;
-      --surface: #1a1a22;
-      --surface-raised: #22222e;
-      --border: rgba(255,255,255,.08);
-      --border-focus: rgba(168,128,255,.4);
-      --text: #f0eef5;
-      --text-mid: #9e9aab;
-      --text-muted: #6b6778;
-      --accent: #a880ff;
-      --accent-hover: #c4a8ff;
-      --accent-glow: rgba(168,128,255,.25);
-      --gradient-1: linear-gradient(135deg, #a880ff 0%, #6c5ce7 100%);
-      --gradient-2: linear-gradient(135deg, #ff6b9d 0%, #c44dff 50%, #6c5ce7 100%);
-    }
-
     body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      font-size: 14px;
-      -webkit-font-smoothing: antialiased;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #f5f5f4;
+      color: #1c1917;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .login-wrap { width: 100%; max-width: 380px; }
+    .login-header { margin-bottom: 32px; }
+    .login-header h1 { font-size: 20px; font-weight: 600; color: #1c1917; margin-bottom: 4px; }
+    .login-header p  { font-size: 14px; color: #78716c; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e7e5e4;
+      border-radius: 10px;
+      padding: 28px 24px;
     }
 
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 600px 400px at 20% 30%, rgba(168,128,255,.12), transparent),
-        radial-gradient(ellipse 500px 500px at 80% 70%, rgba(108,92,231,.1), transparent),
-        radial-gradient(ellipse 400px 300px at 50% 50%, rgba(255,107,157,.06), transparent);
-      animation: bgShift 12s ease-in-out infinite alternate;
-      z-index: 0;
-    }
-    @keyframes bgShift {
-      0% { opacity: .7; transform: scale(1); }
-      100% { opacity: 1; transform: scale(1.05); }
-    }
-
-    .particles { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-    .particles span {
-      position: absolute; width: 2px; height: 2px;
-      background: rgba(168,128,255,.4); border-radius: 50%;
-      animation: float linear infinite;
-    }
-    @keyframes float {
-      0% { transform: translateY(100vh) scale(0); opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
-    }
-
-    .login-wrapper {
-      width: 100%; max-width: 440px; padding: 20px;
-      position: relative; z-index: 1;
-      animation: fadeUp .6s ease-out;
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .login-card {
-      background: rgba(26,26,34,.85);
-      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 44px 40px 38px;
-      box-shadow: 0 0 0 1px rgba(168,128,255,.05), 0 4px 16px rgba(0,0,0,.3),
-        0 16px 48px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05);
-    }
-
-    .login-brand { text-align: center; margin-bottom: 36px; }
-    .login-brand .logo {
-      width: 60px; height: 60px; background: var(--gradient-1);
-      border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;
-      margin-bottom: 18px; box-shadow: 0 8px 24px rgba(168,128,255,.3);
-      position: relative;
-    }
-    .login-brand .logo::after {
-      content: ''; position: absolute; inset: -3px; border-radius: 18px;
-      background: var(--gradient-1); opacity: .2; filter: blur(8px); z-index: -1;
-    }
-    .login-brand .logo svg { width: 28px; height: 28px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .login-brand h1 {
-      font-family: 'DM Sans', sans-serif; font-size: 26px; font-weight: 700;
-      background: var(--gradient-2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; letter-spacing: -0.5px;
-    }
-    .login-brand p { font-size: 14px; color: var(--text-mid); margin-top: 6px; font-weight: 300; }
-
-    .field { margin-bottom: 20px; }
-    .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-mid); margin-bottom: 7px; letter-spacing: .3px; }
-    .field .input-wrap { position: relative; }
-    .field .input-wrap svg {
-      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      width: 16px; height: 16px; stroke: var(--text-muted); fill: none;
-      stroke-width: 1.8; stroke-linecap: round; transition: stroke .2s; pointer-events: none;
-    }
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: 13px; font-weight: 500; color: #44403c; margin-bottom: 6px; }
     .field input {
-      width: 100%; padding: 12px 14px 12px 42px; border: 1px solid var(--border);
-      border-radius: 10px; font-size: 14px; font-family: inherit; color: var(--text);
-      outline: none; background: var(--surface-raised); transition: all .2s;
+      width: 100%; padding: 9px 12px;
+      border: 1px solid #d6d3d1; border-radius: 7px;
+      font-size: 14px; font-family: inherit; color: #1c1917;
+      background: #fff; outline: none; transition: border-color .15s, box-shadow .15s;
     }
     .field input:focus {
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px var(--accent-glow), 0 0 20px rgba(168,128,255,.08);
-      background: rgba(34,34,46,.9);
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
     }
-    .field input:focus ~ svg { stroke: var(--accent); }
-    .field input::placeholder { color: var(--text-muted); }
+    .field input::placeholder { color: #a8a29e; }
 
     .login-btn {
-      width: 100%; padding: 13px; border: none; border-radius: 10px;
-      background: var(--gradient-1); color: #fff; font-size: 14px; font-weight: 600;
-      font-family: inherit; cursor: pointer; transition: all .25s; margin-top: 8px;
-      position: relative; overflow: hidden; letter-spacing: .3px;
+      width: 100%; padding: 10px; border: none; border-radius: 7px;
+      background: #1c1917; color: #fff; font-size: 14px; font-weight: 500;
+      font-family: inherit; cursor: pointer; transition: background .15s;
     }
-    .login-btn::before {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 50%);
-      opacity: 0; transition: opacity .25s;
-    }
-    .login-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(168,128,255,.35); }
-    .login-btn:hover::before { opacity: 1; }
-    .login-btn:active { transform: translateY(0); }
-    .login-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .login-btn:hover { background: #292524; }
+    .login-btn:active { background: #1c1917; }
+    .login-btn:disabled { opacity: .5; cursor: not-allowed; }
 
     .error-msg {
-      background: rgba(255,107,107,.1); border: 1px solid rgba(255,107,107,.25); color: #ff8a8a;
-      padding: 11px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px;
-      display: none; backdrop-filter: blur(10px); animation: shake .4s ease;
+      background: #fef2f2; border: 1px solid #fecaca; color: #dc2626;
+      padding: 10px 12px; border-radius: 7px; font-size: 13px;
+      margin-bottom: 18px; display: none;
     }
     .error-msg.show { display: block; }
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      20% { transform: translateX(-6px); }
-      40% { transform: translateX(6px); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(4px); }
-    }
 
-    .login-footer { text-align: center; margin-top: 28px; font-size: 12px; color: var(--text-muted); }
+    .hint-box {
+      margin-top: 20px; padding: 14px 16px;
+      background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px;
+      font-size: 12px; color: #78716c; line-height: 1.7;
+    }
+    .hint-box strong { display: block; font-size: 11px; color: #57534e; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+    .hint-box code { background: #f5f5f4; padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: ui-monospace, monospace; color: #44403c; }
 
-    .credentials-hint {
-      background: rgba(168,128,255,.06); border: 1px solid rgba(168,128,255,.12);
-      border-radius: 12px; padding: 16px 18px; margin-top: 24px;
-      font-size: 12px; color: var(--text-mid); line-height: 1.8;
-    }
-    .credentials-hint strong {
-      display: block; margin-bottom: 6px; font-size: 10px; text-transform: uppercase;
-      letter-spacing: .6px; color: var(--accent); font-weight: 600;
-    }
-    .credentials-hint code {
-      background: rgba(168,128,255,.12); padding: 2px 7px; border-radius: 4px;
-      font-size: 12px; font-family: 'Courier New', monospace; color: var(--accent-hover);
-    }
-    .credentials-hint .role-label { font-size: 11px; color: var(--text-muted); }
-
-    @media (max-width: 480px) {
-      .login-card { padding: 32px 24px 28px; border-radius: 16px; }
-      .login-brand h1 { font-size: 22px; }
-    }
+    .footer { margin-top: 24px; text-align: center; font-size: 12px; color: #a8a29e; }
   </style>
 </head>
 <body>
-<div class="particles" id="particles"></div>
-<div class="login-wrapper">
-  <div class="login-card">
-    <div class="login-brand">
-      <div class="logo">
-        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-      </div>
-      <h1>StitchFlow</h1>
-      <p>Sign in to your workspace</p>
-    </div>
+<div class="login-wrap">
+  <div class="login-header">
+    <h1>StitchFlow</h1>
+    <p>Sign in to continue</p>
+  </div>
 
+  <div class="card">
     <div class="error-msg" id="loginError"></div>
-
     <form id="loginForm">
       <div class="field">
         <label for="username">Username</label>
-        <div class="input-wrap">
-          <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username" autofocus>
-          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
+        <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="username" autofocus>
       </div>
       <div class="field">
         <label for="password">Password</label>
-        <div class="input-wrap">
-          <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
-          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </div>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
       </div>
       <button type="submit" class="login-btn" id="loginBtn">Sign in</button>
     </form>
 
-    <div class="credentials-hint">
-      <strong>Default accounts (prototype)</strong>
-      <code>admin</code> / <code>admin123</code> <span class="role-label">— Full access</span><br>
-      <code>manager</code> / <code>manager123</code> <span class="role-label">— Manage staff &amp; data</span><br>
-      <code>tailor</code> / <code>tailor123</code> <span class="role-label">— View &amp; edit work</span>
+    <div class="hint-box">
+      <strong>Demo accounts</strong>
+      <code>admin</code> / <code>admin123</code> — Full access<br>
+      <code>manager</code> / <code>manager123</code> — Manage staff &amp; data<br>
+      <code>tailor</code> / <code>tailor123</code> — View &amp; edit work
     </div>
   </div>
-  <div class="login-footer">StitchFlow v2.0 &middot; Internal use only</div>
+  <div class="footer">Internal use only</div>
 </div>
 
 <script>
-  (function() {
-    const c = document.getElementById('particles');
-    for (let i = 0; i < 30; i++) {
-      const s = document.createElement('span');
-      s.style.left = Math.random() * 100 + '%';
-      s.style.animationDuration = (6 + Math.random() * 10) + 's';
-      s.style.animationDelay = Math.random() * 8 + 's';
-      s.style.width = s.style.height = (1 + Math.random() * 2) + 'px';
-      c.appendChild(s);
-    }
-  })();
-
   fetch("/api/auth/me").then(r => { if (r.ok) window.location.href = "/"; });
 
   document.getElementById("loginForm").addEventListener("submit", async (e) => {

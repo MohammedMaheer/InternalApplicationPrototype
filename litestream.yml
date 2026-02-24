@@ -1,0 +1,6 @@
+dbs:
+  - path: /app/data/app.db
+    replicas:
+      - type: gcs
+        bucket: stitchflow-db
+        path: replica
