@@ -50,14 +50,28 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
 }
 
+/* ── Animation helpers ──────────────────────────────────── */
+function animateValue(el, end, duration = 500) {
+  const t0 = performance.now();
+  (function tick(now) {
+    const p = Math.min((now - t0) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(end * ease);
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
 /* ── Modal helpers ─────────────────────────────────────── */
 function openModal(id) { document.getElementById(id).classList.add("open"); }
 function closeModal(id) {
-  document.getElementById(id).classList.remove("open");
-  const form = document.querySelector("#" + id + " form");
-  if (form) form.reset();
-  // clear hidden ids
-  document.querySelectorAll("#" + id + " input[type=hidden]").forEach(h => h.value = "");
+  const el = document.getElementById(id);
+  el.classList.add("closing");
+  setTimeout(() => {
+    el.classList.remove("open", "closing");
+    const form = el.querySelector("form");
+    if (form) form.reset();
+    el.querySelectorAll("input[type=hidden]").forEach(h => h.value = "");
+  }, 180);
 }
 
 /* ── Badge helpers ─────────────────────────────────────── */
@@ -120,11 +134,14 @@ async function loadDashboard() {
   ]);
 
   document.getElementById("kpiRow").innerHTML = `
-    <div class="kpi"><div class="label">Customers</div><div class="value">${customers.length}</div></div>
-    <div class="kpi"><div class="label">Measurements</div><div class="value">${measurements.length}</div></div>
-    <div class="kpi"><div class="label">Orders</div><div class="value">${orders.length}</div></div>
-    <div class="kpi"><div class="label">Staff</div><div class="value">${employees.length}</div></div>
+    <div class="kpi"><div class="label">Customers</div><div class="value" data-target="${customers.length}">0</div></div>
+    <div class="kpi"><div class="label">Measurements</div><div class="value" data-target="${measurements.length}">0</div></div>
+    <div class="kpi"><div class="label">Orders</div><div class="value" data-target="${orders.length}">0</div></div>
+    <div class="kpi"><div class="label">Staff</div><div class="value" data-target="${employees.length}">0</div></div>
   `;
+  document.querySelectorAll(".kpi .value").forEach((el, i) => {
+    setTimeout(() => animateValue(el, +el.dataset.target, 600), i * 80 + 150);
+  });
 
   // Order status breakdown
   const statusCounts = { "Pending": 0, "In Progress": 0, "Completed": 0, "Delivered": 0 };
@@ -137,15 +154,18 @@ async function loadDashboard() {
     return `<div class="status-bar-row">
       <div class="status-bar-label">${label}</div>
       <div class="status-bar-track">
-        <div class="status-bar-fill ${statusClasses[label]}" style="width:${orders.length ? pct : 0}%">${pct > 8 ? pct + "%" : ""}</div>
+        <div class="status-bar-fill ${statusClasses[label]}" data-width="${orders.length ? pct : 0}%" style="width:0%">${pct > 8 ? pct + "%" : ""}</div>
       </div>
       <div class="status-bar-count">${count}</div>
     </div>`;
   }).join("");
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".status-bar-fill").forEach(el => { el.style.width = el.dataset.width; });
+  });
 
   const recent = orders.slice(0, 8);
   document.getElementById("recentOrders").innerHTML = recent.length
-    ? recent.map(o => `<tr>
+    ? recent.map((o, i) => `<tr style="--i:${i}">
         <td>${o.id}</td>
         <td>${o.customer_name || "—"}</td>
         <td>${o.description || "—"}</td>
@@ -159,7 +179,7 @@ async function loadDashboard() {
 async function loadCustomers() {
   const rows = await api("/customers");
   document.getElementById("custRows").innerHTML = rows.length
-    ? rows.map(c => `<tr>
+    ? rows.map((c, i) => `<tr style="--i:${i}">
         <td>${c.id}</td>
         <td>${c.name}</td>
         <td>${c.contact || "—"}</td>
@@ -228,7 +248,7 @@ async function viewMeasurementHistory(customerId) {
 
   const measurements = customer.measurements || [];
   document.getElementById("custHistRows").innerHTML = measurements.length
-    ? measurements.map(m => `<tr>
+    ? measurements.map((m, i) => `<tr style="--i:${i}">
         <td>${m.id}</td>
         <td>${m.type}</td>
         <td>${m.chest || "—"}</td>
@@ -261,7 +281,7 @@ function addMeasForCustomerFromHistory() {
 async function loadMeasurements() {
   const rows = await api("/measurements");
   document.getElementById("measRows").innerHTML = rows.length
-    ? rows.map(m => `<tr>
+    ? rows.map((m, i) => `<tr style="--i:${i}">
         <td>${m.id}</td>
         <td>${m.customer_name || m.customer_id}</td>
         <td>${m.type}</td>
@@ -350,7 +370,7 @@ async function deleteMeasurement(id) {
 async function loadOrders() {
   const rows = await api("/orders");
   document.getElementById("orderRows").innerHTML = rows.length
-    ? rows.map(o => `<tr>
+    ? rows.map((o, i) => `<tr style="--i:${i}">
         <td>${o.id}</td>
         <td>${o.customer_name || "—"}</td>
         <td>${o.description || "—"}</td>
@@ -449,7 +469,7 @@ async function deleteOrder(id) {
 async function loadEmployees() {
   const rows = await api("/employees");
   document.getElementById("empRows").innerHTML = rows.length
-    ? rows.map(e => `<tr>
+    ? rows.map((e, i) => `<tr style="--i:${i}">
         <td>${e.id}</td>
         <td>${e.name}</td>
         <td>${e.contact || "—"}</td>
