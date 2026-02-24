@@ -1,0 +1,7 @@
+node_modules
+data
+.git
+.gitignore
+*.md
+test-e2e.js
+render.yaml
